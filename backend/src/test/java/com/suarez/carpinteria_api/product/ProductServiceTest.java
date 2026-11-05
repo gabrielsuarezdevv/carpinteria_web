@@ -1,5 +1,6 @@
 package com.suarez.carpinteria_api.product;
 
+import com.suarez.carpinteria_api.product.dto.ProductRequest;
 import com.suarez.carpinteria_api.common.ResourceNotFoundException;
 import com.suarez.carpinteria_api.product.dto.ProductResponse;
 import org.junit.jupiter.api.Test;
@@ -7,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.ArgumentCaptor;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -15,6 +17,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 
 // Clase de prueba para ProductService. Utiliza Mockito para simular el comportamiento del ProductRepository y probar la lógica de negocio del servicio de productos.
 @ExtendWith(MockitoExtension.class)
@@ -64,5 +68,31 @@ class ProductServiceTest {
 
         // Act + Assert: llama a productService.findById(99L) y verifica que lanza ResourceNotFoundException
         assertThatThrownBy(() -> productService.findById(99L)).isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void create_savesProductAndReturnsResponse() {
+        // Arrange
+        ProductRequest request = new ProductRequest("Alicate Medieval", "Alicate de hierro apto para forja", 5, new BigDecimal("21.99"));
+        when(productRepository.save(any(Product.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        ProductResponse response = productService.create(request);
+
+        // Assert
+        assertThat(response.name()).isEqualTo(request.name());
+        assertThat(response.description()).isEqualTo(request.description());
+        assertThat(response.stock()).isEqualTo(request.stock());
+        assertThat(response.price()).isEqualByComparingTo(request.price());
+        verify(productRepository).save(any(Product.class));
+
+        // ArgumentCaptor captura el producto que recibió el repositorio para poder inspeccionarlo, 
+        // asi compruebas que lo que llegó al repositorio es lo que pedía el request.
+        ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(captor.capture());
+        assertThat(captor.getValue().getName()).isEqualTo("Alicate Medieval");
+        assertThat(captor.getValue().getStock()).isEqualTo(request.stock());
+
     }
 }
