@@ -29,8 +29,9 @@ public class Product {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
+    // Constructor protegido requerido por JPA
     protected Product() {
-        // Required by JPA
+        
     }
 
     public Product(String name, String description, Integer stock, BigDecimal price) {
